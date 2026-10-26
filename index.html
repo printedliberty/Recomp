@@ -242,34 +242,47 @@ const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DB_MAX = 50, DB_STEP = 5;
 const PT_STD = {push:22, sit:25}, PT_BUF = {push:30, sit:35};
+/* Official 1.5 mi standard (state peace-officer test rules) and Coach's goal estimate, in seconds. */
+const RUN_STD = 928, RUN_GOAL = 840;
+/* Bump when the default program changes; older saved programs are replaced (logs kept). */
+const PROGRAM_REV = 2;
+const EVENT_REST_MIN = 20;
+const Z2_TXT = 'Brisk incline walk, hike, or (later) an easy ruck with a light pack. Conversational effort, nose-breathing pace. Not a run and not part of the run ramp. Stop if your shins hurt.';
+const SITUP_FORM = 'Knees bent 45°, fingers locked behind your head, elbows touch knees, shoulder blades touch the mat. A partner may hold your ankles (hands only).';
+const PUSHUP_FORM = 'Body straight, chest down to a fist (≤4 in) under it, full lockout. Rest only in the up position.';
 
 const SCHEMA = 3;
 const X = (id,name,kind,sets,min,max,o={}) => Object.assign({id,name,kind,sets,min,max,side:false,amrap:false,rest:75,main:false,note:'',start:0},o);
 /* exercise library — ids are stable so history carries across blocks */
 const LIB = {
   'pullup':['Pull-up','bw',3,5,8,{rest:150,main:true,note:'Dead hang to chin over bar. Once every set hits 8, add a backpack.'}],
-  'fe-pushup':['Feet-elevated push-up','bw',3,6,8,{rest:150,main:true}],
-  'db-row':['One-arm DB row','db',3,10,12,{side:true,rest:90,start:35}],
+  'fe-pushup':['Feet-elevated push-up','bw',3,6,8,{rest:150,main:true,note:'Feet on the bench or a chair: shifts the work toward the upper chest. All sets at the top of the range: deficit hands, then a loaded backpack.'}],
+  'db-row':['One-arm DB row','db',3,10,12,{side:true,rest:90,start:35,cap:'At 50s for every set at the top of the range: 3-second lowering and a 1-second pause in the stretch, reps back to the bottom. Maxed again: 1.5 reps (half rep from the stretch counts as part of one).'}],
   'lat-raise':['DB lateral raise','db',3,12,15,{rest:75,start:10}],
   'db-curl':['DB curl','db',2,10,15,{rest:75,start:20}],
   'oh-tri':['DB overhead triceps extension','db',2,10,15,{rest:75,start:25,note:'One dumbbell, both hands.'}],
-  'bss':['DB Bulgarian split squat','db',3,6,8,{side:true,rest:150,main:true,start:20}],
-  'db-rdl':['DB Romanian deadlift','db',3,8,8,{rest:150,main:true,start:40}],
+  'bss':['DB Bulgarian split squat','db',3,6,8,{side:true,rest:150,main:true,start:20,cap:'At 50s for 8 clean reps: switch to a front-foot-elevated split squat with a 3-second lowering, reps back to 6.'}],
+  'db-rdl':['DB Romanian deadlift','db',3,8,8,{rest:150,main:true,start:40,cap:'At 50s for 8 clean reps: make the single-leg DB RDL your main hinge (6–8 / side, 3-second lowering).'}],
   'nordic':['Nordic curl','bw',2,4,6,{rest:120,note:'Lower slowly. Push back up with your hands as needed.'}],
   'sl-calf':['Single-leg DB calf raise','db',3,10,15,{side:true,rest:60,start:25}],
   'plank':['Plank','hold',2,45,60,{rest:60}],
   'chinup':['Chin-up','bw',3,6,8,{rest:150,main:true}],
-  'db-ohp':['Seated DB overhead press','db',3,6,8,{rest:150,main:true,start:30}],
+  'db-ohp':['Seated DB overhead press','db',3,6,8,{rest:150,main:true,start:30,cap:'At 50s for every set at the top of the range: 3-second lowering and a 1-second pause in the stretch, reps back to the bottom. Maxed again: 1.5 reps (half rep from the stretch counts as part of one).'}],
   'pushup':['Push-up','bw',3,0,0,{amrap:true,rest:120,note:'Stop each set 1–2 reps short of failure.'}],
-  'cs-row':['Chest-supported DB row','db',3,10,12,{rest:90,start:30}],
+  'cs-row':['Chest-supported DB row','db',3,10,12,{rest:90,start:30,cap:'At 50s for every set at the top of the range: 3-second lowering and a 1-second pause in the stretch, reps back to the bottom. Maxed again: 1.5 reps (half rep from the stretch counts as part of one).'}],
   'rdf':['Rear-delt fly','db',3,12,15,{rest:60,start:10}],
   'hammer':['Hammer curl','db',2,10,15,{rest:75,start:20}],
   'rev-lunge':['DB reverse lunge','db',3,8,8,{side:true,rest:150,main:true,start:25}],
   'sl-rdl':['Single-leg DB RDL','db',3,8,10,{side:true,rest:120,start:25}],
   'st-calf':['Standing DB calf raise','db',3,12,15,{rest:60,start:40}],
-  'def-pushup':['Deficit push-up (DB handles)','bw',3,8,12,{rest:75,note:'Hands on dumbbell handles for extra depth.'}],
+  'def-pushup':['Deficit push-up (DB handles)','bw',3,8,15,{rest:75,note:'Hands on dumbbell handles, chest below hand level. All sets at 15: wear a loaded backpack, reps back to 8.'}],
+  'incline-press':['Incline DB press','db',3,6,8,{rest:150,main:true,start:30,note:'Bench at about 30°. Lower to the upper chest with a full stretch.',cap:'At 50s for every set at the top of the range: 3-second lowering and a 1-second pause in the stretch, reps back to the bottom. Maxed again: 1.5 reps (half rep from the stretch counts as part of one).'}],
+  'incline-fly':['Incline DB fly','db',3,10,15,{rest:75,start:15,note:'Bench at about 30°. Deep stretch at the bottom; stop a little short of the top.'}],
+  'incline-curl':['Incline DB curl','db',3,10,15,{rest:75,start:15,note:'Bench at 45–60°, arms hanging behind the body for the stretch.'}],
+  'db-skull':['DB skull crusher','db',3,10,15,{rest:75,start:20,note:'Lying on the bench, lower the DBs beside or just behind your head for the long-head stretch.'}],
+  'quad-acc':['Heels-elevated goblet squat','db',3,12,20,{rest:90,start:40,note:'One DB at your chest, heels on a plate or thick book. Take sets to 0–1 reps in reserve. Knees cranky? Swap to DB step-ups.'}],
   'pt-push-sub':['Push-ups · submax','bw',4,0,0,{rest:60,sub:{f:'push'},note:'Strict reps at a set share of your latest max. +1 rep per set each week.'}],
-  'pt-sit-sub':['Sit-ups · submax','bw',4,0,0,{rest:60,sub:{f:'sit'},note:'Strict reps at a set share of your latest max. +1 rep per set each week.'}]
+  'pt-sit-sub':['Sit-ups · submax','bw',4,0,0,{rest:60,sub:{f:'sit'},note:'Strict reps at a set share of your latest max. +1 rep per set each week. Official form: knees 45°, fingers behind head, elbows to knees, shoulder blades to the mat.'}]
 };
 function E(id,sets,min,max,o){ const [n,k,s,mn,mx,oo]=LIB[id]; return X(id,n,k,sets??s,min??mn,max??mx,Object.assign({},oo,o||{})); }
 const SUB = (sets,lo,hi) => [E('pt-push-sub',sets,0,0,{sub:{f:'push',lo,hi}}), E('pt-sit-sub',sets,0,0,{sub:{f:'sit',lo,hi}})];
@@ -280,52 +293,57 @@ function defaultProgram(){
   const b1 = {id:'b1',n:1,name:'Restart',start:'2026-10-26',end:'2026-11-08',deload:null,rir:'Leave 2–3 reps in reserve',
     days:{
       1:{title:'Upper A',type:'lift',tag:'Pull · Push · Arms',exercises:[E('pullup',3),E('fe-pushup',3),E('db-row',3),E('lat-raise',3),E('db-curl',2),E('oh-tri',2)]},
-      2:{title:'Run + PT',type:'run',tag:'Easy run · test practice',run:RUN(20,30,'easy'),pt:'max',exercises:[]},
-      3:{title:'Lower A',type:'lift',tag:'Legs · Core',exercises:[E('bss',3),E('db-rdl',3),E('nordic',2,3,3,{byWeek:{2:[3,5]}}),E('sl-calf',3),E('plank',2,45,45)]},
-      4:{title:'Easy Run',type:'run',tag:'Conversational pace',run:RUN(20,30,'easy'),exercises:[]},
-      5:{title:'Upper B',type:'lift',tag:'Pull · Press · Arms',exercises:[E('chinup',3),E('db-ohp',3),E('pushup',2),E('cs-row',3),E('rdf',3),E('hammer',2)]},
+      2:{title:'Run + PT',type:'run',tag:'Easy run · test practice',run:RUN(20,30,'easy',{wk:{1:{min:20,max:25,kind:'runwalk'}}}),pt:'max',exercises:[]},
+      3:{title:'Lower A',type:'lift',tag:'Legs · Core',exercises:[E('bss',3),E('db-rdl',3),E('nordic',2,3,3,{byWeek:{2:[3,5]}}),E('sl-calf',3),E('plank',2,45,45),E('lat-raise',2,12,15,{fromWeek:2})]},
+      4:{title:'Easy Run',type:'run',tag:'Conversational pace',run:RUN(20,30,'easy',{wk:{1:{min:20,max:25,kind:'runwalk'}}}),exercises:[]},
+      5:{title:'Upper B',type:'lift',tag:'Pull · Press · Arms',exercises:[E('chinup',3),E('db-ohp',3),E('pushup',2),E('cs-row',3),E('rdf',3),E('lat-raise',2,12,15,{fromWeek:2}),E('hammer',2)]},
       6:{title:'Lower B',type:'lift',tag:'Legs · test practice',pt:'max',exercises:[E('rev-lunge',3),E('sl-rdl',3),E('nordic',2,3,3,{byWeek:{2:[3,5]}}),E('st-calf',3)]},
       0:REST}};
-  const upperC = {title:'Upper C',tag:'Optional · push & arms',exercises:[E('def-pushup',3,8,12,{rest:75}),E('lat-raise',3,12,15,{rest:75}),E('rdf',2,12,15,{rest:75}),E('db-curl',2,10,15,{rest:75}),E('oh-tri',2,10,15,{rest:75})]};
-  const b2days = pull => ({
-      1:{title:'Upper A',type:'lift',tag:'Pull · Push · Arms',exercises:[E('pullup',pull,5,8),E('fe-pushup',4,6,8),E('db-row',3),E('lat-raise',3),E('db-curl',2),E('oh-tri',2)]},
-      2:{title:'Run + PT max',type:'run',tag:'Easy run · strides · PT max',run:RUN(25,33,'strides'),pt:'max',exercises:[]},
-      3:{title:'Lower A',type:'lift',tag:'Legs · Core',exercises:[E('bss',4,6,8),E('db-rdl',3),E('nordic',2,4,6),E('sl-calf',3),E('plank',2,45,60)]},
-      4:{title:'Easy Run',type:'run',tag:'Conversational pace',run:RUN(25,33,'easy'),opt:true,exercises:[]},
-      5:{title:'Upper B',type:'lift',tag:'Pull · Press · Arms',exercises:[E('chinup',pull,pull===4?5:6,8),E('db-ohp',3),E('pushup',3,0,0,{note:'Stop each set 1–2 reps short of failure (RIR 1–2).'}),E('cs-row',3),E('rdf',3),E('lat-raise',2),E('hammer',2)]},
-      6:{title:'Lower B',type:'lift',tag:'Legs · PT submax',exercises:[E('rev-lunge',3),E('sl-rdl',3),E('nordic',2,4,6),E('st-calf',3),...SUB(4,0.6,0.75)]},
-      0:REST});
-  const b2 = {id:'b2',n:2,name:'Build',start:'2026-11-09',end:'2026-12-06',deload:['2026-11-30','2026-12-06'],rir:'1–2 RIR · last isolation set 0–1',opt:upperC,days:b2days(3)};
-  const b3d = b2days(4);
-  b3d[1].run = RUN(20,25,'easy',{after:true}); b3d[1].tag='Pull · Push · Arms · easy run';
-  b3d[2] = {title:'Run + PT max',type:'run',tag:'Intervals · PT max',run:RUN(25,33,'intervals',{reps:6}),pt:'max',exercises:[]};
-  b3d[4] = {title:'Longest run',type:'run',tag:'Easy pace · building',run:RUN(36,36,'long',{byWeek:[36,36,39,39]}),opt:true,exercises:[]};
-  const b3 = {id:'b3',n:3,name:'Strength',start:'2026-12-07',end:'2027-01-03',deload:['2026-12-28','2027-01-03'],deloadNote:'Maintenance-calorie week.',rir:'1–2 RIR · last isolation set 0–1',opt:upperC,days:b3d};
-  const b4 = {id:'b4',n:4,name:'PT peak',start:'2027-01-04',end:'2027-01-31',deload:null,rir:'1–2 RIR',days:{
-      1:{title:'Upper A',type:'lift',tag:'Lift · easy run · PT submax',run:RUN(20,25,'easy',{after:true}),exercises:[E('pullup',3,5,8),E('fe-pushup',3,6,8),E('db-row',2),E('lat-raise',2),E('db-curl',2),E('oh-tri',2),...SUB(5,0.6,0.7)]},
-      2:{title:'400s + PT max',type:'run',tag:'Goal-pace 400s · PT max',run:RUN(30,35,'400s',{reps:[6,8]}),pt:'max',exercises:[]},
-      3:{title:'Lower A',type:'lift',tag:'Legs · Core',exercises:[E('bss',3,6,8),E('db-rdl',3),E('nordic',2,4,6),E('sl-calf',2),E('plank',2,45,60)]},
-      4:{title:'Tempo or easy',type:'run',tag:'Run · PT submax',run:RUN(30,40,'tempo'),exercises:[...SUB(5,0.6,0.7)]},
-      5:{title:'Upper B',type:'lift',tag:'Pull · Press · Arms',exercises:[E('chinup',3,6,8),E('db-ohp',3),E('pushup',2),E('cs-row',2),E('rdf',2),E('lat-raise',2),E('hammer',2)]},
-      6:{title:'Lower B',type:'lift',tag:'Legs · PT submax',exercises:[E('rev-lunge',3),E('sl-rdl',3),E('nordic',2,4,6),E('st-calf',2),...SUB(5,0.6,0.7)]},
-      0:REST}};
-  const fb = () => ({
-    fbA:{title:'Full body A',type:'lift',tag:'Pull · Legs · Push',exercises:[E('pullup',3,5,8),E('bss',3,6,8),E('fe-pushup',3,6,8),E('db-rdl',2),E('lat-raise',2)]},
-    fbB:{title:'Full body B',type:'lift',tag:'Pull · Press · Legs',exercises:[E('chinup',3,6,8),E('db-ohp',3),E('rev-lunge',2),E('cs-row',2,10,12),E('nordic',2,4,6)]}});
-  const b5 = {id:'b5',n:5,name:'Academy build',start:'2027-02-01',end:'2027-03-28',deload:['2027-02-22','2027-02-28'],rir:'1–2 RIR',banner:'Deficit ends by Mar 28.',alt:fb(),days:{
-      1:{alt:true},3:{alt:true},5:{alt:true},
-      2:{title:'Intervals + PT max',type:'run',tag:'Intervals · PT max',run:RUN(25,35,'intervals',{reps:6}),pt:'max',exercises:[]},
-      4:{title:'Easy Run',type:'run',tag:'Conversational pace',run:RUN(25,35,'easy'),exercises:[]},
-      6:{title:'Long run',type:'run',tag:'Easy pace · building',run:RUN(40,40,'long',{byWeek:[40,40,44,44,44,48,52,55]}),exercises:[]},
-      0:Object.assign({},REST,{optRun:{from:'2027-03-01',min:20,max:20}})}};
-  const b6 = {id:'b6',n:6,name:'Transition',start:'2027-03-29',end:null,deload:null,rir:'2 RIR',banner:'Maintenance calories · arrive fresh.',alt:fb(),days:{
-      1:{use:'fbA'},4:{use:'fbB'},
-      2:{title:'Run + PT max',type:'run',tag:'Easy run · strides · PT max',run:RUN(30,40,'strides'),pt:'max',exercises:[]},
-      3:{title:'Easy Run',type:'run',tag:'Conversational pace',run:RUN(25,30,'easy'),exercises:[]},
-      5:Object.assign({},REST,{optRun:{from:'2027-03-29',min:20,max:30}}),
-      6:{title:'Long run',type:'run',tag:'Easy pace · hold volume',run:RUN(50,55,'long'),exercises:[]},
-      0:REST}};
-  return {schema:SCHEMA, name:'Master plan', start:'2026-10-26', blocks:[b1,b2,b3,b4,b5,b6],
+  /* From Block 2 the plan is physique-first: priority = side/rear delts, upper chest, lats/upper back, arms.
+     Weekly direct sets (Pelland 2025 fractional counting puts indirect sets at 0.5 on top of these):
+     B2 Build ~12 priority / B3 Push ~13-14 / B4 PT tune-up ~12 / B5 Peak lean ~13-14 / B6 Academy tune-up ~8-9.
+     Lower body at maintenance-plus: quads ~9, glutes ~9 (direct + half of hinges), hams ~8. */
+  const LP = 'Last set: when full reps stop, add bottom-half (lengthened) partials to failure.';
+  const SS = x => `Superset with the ${x}: alternate, about 60 s between.`;
+  const SIT = n => E('pt-sit-sub',n,0,0,{sub:{f:'sit',lo:0.6,hi:0.75}});
+  /* lv: 'build' (B2), 'push' (B3/B5), 'tune' (B4), 'acad' (B6) */
+  const UL = lv => {
+    const P=lv==='push', T=lv==='tune', A=lv==='acad', W1=lv==='build'?{setsWk:{1:2}}:{};
+    const pt = T||A ? SUB(3,0.6,0.75) : [SIT(2)];
+    return {
+      1:{title:'Upper A',type:'lift',tag:'Lats · Upper chest · Delts · Arms'+(T||A?' · PT submax':''),exercises:[
+          E('pullup',P?4:3,5,8), E('incline-press',A?2:3,6,8), E('db-row',A?2:3),
+          ...(T||A?[]:[E('fe-pushup',3,8,15,Object.assign({main:false,rest:90},W1))]),
+          E('lat-raise',A?3:4,12,15,{note:LP+' Do these in the rest after each push-up set to save time.'}), E('incline-curl',A?2:3,10,15,{note:SS('overhead triceps extension')}), E('oh-tri',A?2:3,10,15), ...pt]},
+      2:{title:'Run + PT max',type:'run',tag:{build:'Easy run · strides · PT max',push:'Intervals · PT max',tune:'Goal-pace 400s · PT max',acad:'Easy run · strides · PT max'}[lv],
+         run:{build:RUN(25,33,'strides'),push:RUN(25,33,'intervals',{reps:6}),tune:RUN(30,35,'400s',{reps:[6,8]}),acad:RUN(30,40,'strides')}[lv],pt:'max',exercises:[]},
+      3:{title:'Lower A',type:'lift',tag:'Legs · Delts · Arms',exercises:[
+          E('bss',3,6,8), E('db-rdl',A?2:3), E('nordic',2,4,6), E('sl-calf',2),
+          E('lat-raise',A?2:3,12,15,{note:SS('rear-delt fly')}), E('rdf',A?2:3,12,15), E('oh-tri',2,10,15), ...(P?[E('db-curl',2,10,15)]:[])]},
+      4:{title:lv==='build'?'Easy Run':'Long run',type:'run',tag:lv==='build'?'Conversational pace':'Easy pace · building',run:null,exercises:[]},
+      5:{title:'Upper B',type:'lift',tag:'Lats · Upper back · Chest · Delts · Arms'+(T||A?' · PT submax':''),exercises:[
+          E('chinup',P?4:3,6,8), E('db-ohp',A?2:3), E('cs-row',A?2:3),
+          ...(T||A?[]:[E('def-pushup',3,8,15,W1)]), E('incline-fly',A?2:3,10,15,W1),
+          E('lat-raise',P?4:3,12,15,{note:LP+' '+SS('hammer curl')}), E('hammer',A?2:3,10,15), ...pt]},
+      6:{title:'Lower B',type:'lift',tag:'Legs · Delts · Arms',exercises:[
+          E('rev-lunge',3), E('sl-rdl',T||A?2:3,6,8), E('quad-acc',T||A?2:3), E('st-calf',2),
+          E('lat-raise',P?3:2,12,15,Object.assign({note:SS('rear-delt fly')},lv==='build'?{setsWk:{1:0}}:{})), E('rdf',2,12,15),
+          E('db-skull',A?2:3,10,15,{note:SS('DB curl')}), E('db-curl',2,10,15)]},
+      0:REST};
+  };
+  const b2d = UL('build'); b2d[4].run = RUN(25,33,'easy');
+  const b2 = {id:'b2',n:2,name:'Build',start:'2026-11-09',end:'2026-12-06',deload:['2026-11-30','2026-12-06'],rir:'1–2 RIR · last isolation set 0–1',days:b2d};
+  const b3d = UL('push'); b3d[4].run = RUN(36,36,'long',{byWeek:[36,36,39,39]});
+  const b3 = {id:'b3',n:3,name:'Push',start:'2026-12-07',end:'2027-01-03',deload:['2026-12-28','2027-01-03'],deloadNote:'Maintenance-calorie week.',rir:'1–2 RIR · last isolation set 0–1',days:b3d};
+  const b4d = UL('tune'); b4d[4].run = RUN(40,40,'long'); b4d[4].tag='Easy pace · hold';
+  const b4 = {id:'b4',n:4,name:'PT tune-up',start:'2027-01-04',end:'2027-01-31',deload:null,rir:'1–2 RIR',banner:'Physique volume held; PT and 1.5 mi sharpen for the hiring test.',days:b4d};
+  const b5d = UL('push'); b5d[4].run = RUN(40,40,'long',{byWeek:[40,40,44,40,44,48,52,55]});
+  const b5 = {id:'b5',n:5,name:'Peak lean',start:'2027-02-01',end:'2027-03-28',deload:['2027-02-22','2027-02-28'],rir:'1–2 RIR · last isolation set 0–1',banner:'Deficit ends by Mar 28.',days:b5d};
+  const b6d = UL('acad'); b6d[4].run = RUN(50,55,'long'); b6d[4].tag='Easy pace · hold volume';
+  const b6 = {id:'b6',n:6,name:'Academy tune-up',start:'2027-03-29',end:null,deload:null,rir:'2 RIR',banner:'Maintenance calories · physique volume trimmed to keep gains · arrive fresh.',days:b6d};
+  const Z2 = dow => ({dow, min:30, max:45, from:'2026-11-02'});
+  for(const b of [b1,b2,b3,b4,b5,b6]) b.z2=Z2(5);
+  return {schema:SCHEMA, rev:PROGRAM_REV, name:'Master plan', start:'2026-10-26', blocks:[b1,b2,b3,b4,b5,b6],
     mocks:['2026-11-03','2026-11-24','2026-12-15','2027-01-05','2027-01-19','2027-02-02','2027-03-02','2027-03-23']};
 }
 function freshState(){
@@ -345,6 +363,9 @@ function migrate(d){
     if(d.program && !Array.isArray(d.program.blocks)) out.legacyProgram=d.program;
     out.program=defaultProgram();
     if(v<SCHEMA){ out.migratedFrom=v; out.migratedAt=Date.now(); }
+  } else if((+d.program.rev||1) < PROGRAM_REV){
+    /* plan revision: install the new template, keep every log; the old program is kept as a backup */
+    out.programPrev=d.program; out.program=defaultProgram(); out.programRevAt=Date.now();
   }
   out.version=SCHEMA;
   return out;
@@ -427,11 +448,14 @@ function suggest(ex,k){
     const tot=reps.reduce((a,b)=>a+b,0), tgt=padTo(reps,n); tgt[tgt.length-1]++;
     return {w, reps:tgt, kind:'beat', text:`Beat <b>${tot} total reps</b> · last ${reps.join(' · ')}`, last:summary};
   }
-  const hitTop = ls.length>=n && ls.every(s=>s.r>=ex.max) && !ls.some(s=>s.rir===0);
+  /* sets prescribed last time (set counts ramp between blocks, so compare against that day's plan) */
+  let need=n; try{ const pe=planFor(last.k).exercises.find(e=>e.id===ex.id); if(pe) need=Math.min(n,pe.sets); }catch(e){}
+  const hitTop = ls.length>=need && ls.every(s=>s.r>=ex.max) && !ls.some(s=>s.rir===0);
   if(hitTop){
     if(ex.kind==='hold') return {w, reps:Array(n).fill(ex.max+10), kind:'up', text:`Every set hit ${ex.max}s — go <b>${ex.max+10}s</b> today`, last:summary};
     if(ex.kind==='db'){
       if(w+DB_STEP<=DB_MAX) return {w:w+DB_STEP, reps:Array(n).fill(ex.min), kind:'up', text:`Top of the range last time — move up to <b>${w+DB_STEP} lb</b>, reps back to ${ex.min}. Only if form held.`, last:summary};
+      if(ex.cap) return {w, reps:Array(n).fill(ex.min), kind:'maxed', text:`Maxed at ${DB_MAX} lb. ${esc(ex.cap)}`, last:summary};
       return {w, reps:Array(n).fill(ex.max+1), kind:'maxed', text:`Maxed at ${DB_MAX} lb — use a 3-second lowering${ex.side?'':' or switch to single-arm/leg'} and chase <b>${ex.max+1}+</b>`, last:summary};
     }
     const nw = w>0 ? w+DB_STEP : 10;
@@ -502,15 +526,20 @@ function planFor(k){
   const p = Object.assign({exercises:[]}, clone(tpl));
   Object.assign(p, {k, dow, slot, bi:i, block:b, week, weeks:blockWeeks(b), before, altNote:!!altNote, rirText:b.rir, flags:[], banners:[]});
   p.exercises = p.exercises||[];
+  p.exercises = p.exercises.filter(e=>!(e.fromWeek && week<e.fromWeek));
   for(const e of p.exercises){ const o=e.byWeek&&e.byWeek[week]; if(o){ e.min=o[0]; e.max=o[1]; } }
+  for(const e of p.exercises) if(e.setsWk && e.setsWk[week]!=null) e.sets=e.setsWk[week];
+  p.exercises = p.exercises.filter(e=>e.sets>0);
+  if(p.run && p.run.wk && p.run.wk[week]) Object.assign(p.run, p.run.wk[week]);
   if(p.run && p.run.byWeek){ const v=p.run.byWeek[Math.min(week,p.run.byWeek.length)-1]; p.run.min=p.run.max=v; }
   if(p.optRun && k>=p.optRun.from) p.extraRun = {min:p.optRun.min, max:p.optRun.max, kind:'easy'};
+  if(b.z2 && dow===b.z2.dow && k>=b.z2.from && !p.run) p.aerobic = {min:b.z2.min, max:b.z2.max};
   /* mock tests and the real test */
   const T=st.testDate;
   if(T && k===T){
-    Object.assign(p, {title:'Hiring test', type:'mock', test:true, tag:'Push-ups · sit-ups · 1.5 mi', exercises:[], run:null, pt:'max', opt:false, extraRun:null});
+    Object.assign(p, {title:'Hiring test', type:'mock', test:true, tag:'Push-ups · sit-ups · 1.5 mi', exercises:[], run:null, pt:'max', opt:false, extraRun:null, aerobic:null});
   } else if(mockDates().includes(k)){
-    Object.assign(p, {title:'Mock test', type:'mock', tag:'Push-ups · sit-ups · 1.5 mi', exercises:[], run:null, pt:'max', opt:false, extraRun:null});
+    Object.assign(p, {title:'Mock test', type:'mock', steady:b.n<4, tag:'Push-ups · sit-ups · 1.5 mi', exercises:[], run:null, pt:'max', opt:false, extraRun:null, aerobic:null});
   }
   /* gated hard runs */
   if(p.run && (p.run.kind==='intervals'||p.run.kind==='400s') && st.intervalsOK!==true){ p.gate=p.run.kind; p.run.kind = p.run.kind==='400s' ? 'strides' : 'easy'; p.run.from=p.gate; if(p.run.max>33 && p.gate==='400s'){ p.run.min=25; p.run.max=33; } }
@@ -553,7 +582,7 @@ function planFor(k){
     p.rirText = p.rirText + ' · +1 RIR today';
     p.banners.unshift(p.movedMock ? 'Slept under 6 h — no mock today. Easy run plus submax instead; move the mock to your next good-sleep day.' : 'Slept under 6 h — no max tests, one set fewer per exercise, +1 rep in reserve. Easy running is fine.');
   }
-  /* optional Upper C (B2/B3 Thursday) */
+  /* optional Upper C (legacy programs only; the current template has 4 lifting days) */
   if(p.opt && b.opt && !p.lowSleep){
     const n=liftDoneB1();
     if(n>=UPPER_C_NEED){ p.optional=clone(b.opt); }
@@ -650,9 +679,11 @@ function gateCard(p){
   if(v===false) return `<p class="tiny" style="margin:-2px 4px 12px">Easy run instead of ${what}. <button class="link" data-act="iv" data-v="">Ready? Check again</button></p>`;
   return `<div class="card"><h3>Unlock ${what}?</h3><p class="sub" style="margin:4px 0 12px">Have you run 3×/week, pain-free, for the last 3 weeks? If not, today stays an easy run.</p><div class="row" style="gap:8px"><button class="btn ghost sm" data-act="iv" data-v="0" style="flex:1">Not yet</button><button class="btn acc sm" data-act="iv" data-v="1" style="flex:1">Yes — unlock</button></div></div>`;
 }
-const MOCK_STEPS=['10 min warm-up jog','Max strict push-ups · 60 s','Rest 3 min','Max strict sit-ups · 60 s','Rest 5 min','Timed 1.5 mi — all out','10 min cool-down'];
+const mileStd = () => `Official standard: 1.5 mi in ${mmss(RUN_STD)} or less · Coach's goal ≈${mmss(RUN_GOAL)} or faster (estimate)`;
+const mockSteps = p => ['10 min warm-up jog','Max strict push-ups · 60 s',`Rest ${EVENT_REST_MIN} min`,'Max strict sit-ups · 60 s',`Rest ${EVENT_REST_MIN} min`,
+  p.steady ? 'Timed 1.5 mi — steady RPE 7, even pace, not all out · stop if your shins hurt' : 'Timed 1.5 mi — hard, even pace · stop if your shins hurt','10 min cool-down'];
 function mockCard(p){
-  return `<div class="card"><h3>${p.test?'Test order':'Mock test order'}</h3>${MOCK_STEPS.map((x,i)=>`<div class="row" style="gap:10px;padding:6px 0;${i?'border-top:1px solid var(--line)':''}"><span class="pill" style="min-width:26px;text-align:center">${i+1}</span><span>${x}</span></div>`).join('')}<div class="note" style="margin-top:8px">Confirm the official event order and form standard with the academy.</div></div>`;
+  return `<div class="card"><h3>${p.test?'Test order':'Mock test order'}</h3>${mockSteps(p).map((x,i)=>`<div class="row" style="gap:10px;padding:6px 0;${i?'border-top:1px solid var(--line)':''}"><span class="pill" style="min-width:26px;text-align:center">${i+1}</span><span>${x}</span></div>`).join('')}<div class="note" style="margin-top:8px">${mileStd()}.<br>Push-ups: ${PUSHUP_FORM}<br>Sit-ups: ${SITUP_FORM}<br>Confirm the official event order and form standard with the academy.</div></div>`;
 }
 function vToday(){
   const k=UI.date, p=planFor(k), s=S.sessions[k], t=todayK(), b=p.block;
@@ -663,10 +694,11 @@ function vToday(){
   if(p.type==='rest'){
     h+=`<div class="card hero"><div class="eyebrow">${blockLabel(b)} · Recovery</div><div class="title">Rest day</div><div class="sub">${esc(p.tag||'Easy walk if you feel like it')}. Recovery is part of the plan.</div></div>`;
     if(p.extraRun) h+=runCard(k,{run:p.extraRun},'Optional easy run');
+    if(p.aerobic) h+=z2Card(k,p);
     const nx=nextTraining(k); if(nx) h+=`<div class="card"><h3>Up next</h3><div class="row between"><div><div class="ex-n">${esc(nx.p.title)}</div><div class="ex-p">${fmtD(nx.k)} · ${esc(nx.p.tag||'')}</div></div><button class="btn sm" data-act="day" data-v="${nx.k}">Preview</button></div></div>`;
     return h+bodyQuick(k);
   }
-  if(s&&s.done) return h+doneCard(k,p);
+  if(s&&s.done) return h+doneCard(k,p)+(p.aerobic?z2Card(k,p):'');
   const c=counts(k,p);
   const wk = `${p.before?'Preview · ':''}Block ${b.n} · Week ${p.week}${p.weeks?' of '+p.weeks:''}${p.flags.length?' · '+p.flags.join(' · '):''}`;
   h+=`<div class="card hero"><div class="row between" style="align-items:flex-start"><div class="grow"><div class="eyebrow">${wk}</div><div class="title">${esc(p.title)}</div><div class="sub">${p.type==='mock'?'Warm-up · push-ups · sit-ups · 1.5 mi · cool-down':esc(p.tag||'')}${p.altNote?' · alternates A/B':''}</div></div><div class="ring">${ringSVG(c.tot?c.dn/c.tot:0)}<div class="c num">${c.dn}<small>of ${c.tot}</small></div></div></div>`;
@@ -682,6 +714,7 @@ function vToday(){
     else h+=`<div class="card"><div class="row between"><div class="grow"><div class="eyebrow">Optional · unlocked</div><div class="ex-n" style="margin-top:2px">${esc(p.optional.title)}</div><div class="ex-p">${p.optional.exercises.map(e=>esc(e.name)).join(' · ')} · rest 60–90 s</div></div><button class="btn sm" data-act="opt" data-v="1">Add</button></div></div>`;
   } else if(p.optLocked) h+=`<p class="tiny" style="margin:2px 4px 12px">Optional Upper C unlocks after all 8 Block 1 lifting sessions — ${p.optLocked.n}/8 done.</p>`;
   if(p.run && p.run.after) h+=runCard(k,p);
+  if(p.aerobic) h+=z2Card(k,p);
   h+=`<div style="height:6px"></div><button class="btn acc" data-act="finish">Finish session</button>`;
   if(c.dn<c.tot) h+=`<p class="tiny" style="text-align:center;margin-top:10px">A partial session still counts toward your streak.</p>`;
   return h;
@@ -716,6 +749,7 @@ function editor(ex,v){
 }
 const RUN_TXT = {
   easy:['Easy run','easy enough to talk'],
+  runwalk:['Run/walk','easy jog, walk whenever you need to, talk-test pace · stop and walk if your shins hurt'],
   strides:['Easy run + strides','then 4 × 20 s strides, fast but relaxed, full walk back'],
   intervals:['Intervals','10 min easy · {r} × (2 min hard / 2 min walk-jog) · easy to finish'],
   '400s':['400 m repeats','10 min easy · {r} × 400 m at goal 1.5-mi pace · 90 s rest · easy to finish'],
@@ -723,6 +757,12 @@ const RUN_TXT = {
   long:['Longest run','easy pace the whole way']
 };
 function goalPace(){ const b=bestMile(); return b?mmss(b/6.035):null; }
+function z2Card(k,p){
+  const A=p.aerobic, r=S.runs[k], v=r&&r.z2, m=v||(p.deload?A.min:Math.round((A.min+A.max)/2/5)*5);
+  return `<div class="card ex"><div class="ex-h"><div class="grow"><div class="ex-n">Zone 2 · easy aerobic</div><div class="ex-p">${p.deload?A.min:A.min+'–'+A.max} min · ${esc(Z2_TXT)}</div></div>${v?'<span class="pill acc">Logged</span>':''}</div>
+  <div class="stp"><span class="lab">Minutes</span><button data-act="z2-adj" data-d="-5">−5</button><input class="num" inputmode="numeric" id="z2Min" value="${m}"><button data-act="z2-adj" data-d="5">+5</button></div>
+  <div style="height:8px"></div><button class="btn ${v?'ghost':'acc'}" data-act="z2-save">${v?'Update':'Log zone 2'}</button></div>`;
+}
 function runCard(k,p,title){
   const R=p.run, r=S.runs[k], m=r&&r.min?r.min:Math.round((R.min+R.max)/2), t=RUN_TXT[R.kind]||RUN_TXT.easy;
   const reps = Array.isArray(R.reps)?R.reps.join('–'):R.reps;
@@ -735,7 +775,7 @@ function runCard(k,p,title){
 function bestMile(exceptK){ const v=Object.entries(S.runs).filter(([k,r])=>r.sec&&k!==exceptK).map(([,r])=>r.sec); return v.length?Math.min(...v):null; }
 function timedCard(k){
   const r=S.runs[k], best=bestMile(k);
-  return `<div class="card ex"><div class="ex-h"><div class="grow"><div class="ex-n">1.5-mile time</div><div class="ex-p">${best?`Your best: ${mmss(best)}`:'Your first one sets the baseline'}</div></div>${r&&r.sec?'<span class="pill acc">Logged</span>':''}</div>
+  return `<div class="card ex"><div class="ex-h"><div class="grow"><div class="ex-n">1.5-mile time</div><div class="ex-p">${best?`Your best: ${mmss(best)}`:'Your first one sets the baseline'} · standard ${mmss(RUN_STD)}</div></div>${r&&r.sec?'<span class="pill acc">Logged</span>':''}</div>
   <div class="mile"><input class="num" inputmode="numeric" id="mileM" value="${r&&r.sec?Math.floor(r.sec/60):''}" placeholder="m" aria-label="Minutes"><span class="metric" style="color:var(--dim)">:</span><input class="num" inputmode="numeric" id="mileS" value="${r&&r.sec?pad(r.sec%60):''}" placeholder="ss" aria-label="Seconds"></div>
   <button class="btn ${r&&r.sec?'ghost':'acc'}" data-act="mile-save">${r&&r.sec?'Update time':'Log time'}</button></div>`;
 }
@@ -743,18 +783,18 @@ function lastPT(k){ const ks=Object.keys(S.pt).filter(x=>x<k).sort(); return ks.
 function ptCard(k,p){
   const mock=p&&p.type==='mock', base=p&&p.block&&p.block.n===1;
   const e=S.pt[k], l=lastPT(k), pu=e?e.push:(l?l.push:20), su=e?e.sit:(l?l.sit:25);
-  return `<div class="card ex"><div class="ex-h"><div class="grow"><div class="ex-n">${mock?'Push-ups &amp; sit-ups':base?'PT practice · baseline':'PT max test'}</div><div class="ex-p">60 s max strict push-ups · 3 min rest · 60 s max strict sit-ups${mock?' · then 5 min rest':''}</div></div>${e?'<span class="pill acc">Logged</span>':''}</div>
+  return `<div class="card ex"><div class="ex-h"><div class="grow"><div class="ex-n">${mock?'Push-ups &amp; sit-ups':base?'PT practice · baseline':'PT max test'}</div><div class="ex-p">60 s max strict push-ups · ${mock?EVENT_REST_MIN:3} min rest · 60 s max strict sit-ups${mock?` · then ${EVENT_REST_MIN} min rest`:''}</div></div>${e?'<span class="pill acc">Logged</span>':''}</div>
   ${l?`<div class="target"><span class="ic">↗</span><span>Last: <b>${l.push} push-ups · ${l.sit} sit-ups</b></span></div>`:''}
   <div class="stp"><span class="lab">Push-ups</span><button data-act="pt-adj" data-f="push" data-d="-1">−1</button><input class="num" inputmode="numeric" id="ptPush" value="${pu}"><button data-act="pt-adj" data-f="push" data-d="1">+1</button></div>
   <div class="stp"><span class="lab">Sit-ups</span><button data-act="pt-adj" data-f="sit" data-d="-1">−1</button><input class="num" inputmode="numeric" id="ptSit" value="${su}"><button data-act="pt-adj" data-f="sit" data-d="1">+1</button></div>
   <div class="row" style="margin-top:10px;gap:8px"><button class="btn ghost" data-act="pt-timer"${mock?' data-v="mock"':''} style="flex:1">Run test timer</button><button class="btn ${e?'ghost':'acc'}" data-act="pt-save" style="flex:1">${e?'Update':'Log PT'}</button></div>
-  <p class="tiny" style="margin:8px 2px 0">The timer runs 60 s → 3 min rest → 60 s${mock?' → 5 min rest':''}, with a chime at each switch.</p></div>`;
+  <p class="tiny" style="margin:8px 2px 0">The timer runs 60 s → ${mock?EVENT_REST_MIN:3} min rest → 60 s${mock?` → ${EVENT_REST_MIN} min rest`:''}, with a chime at each switch.</p><p class="tiny" style="margin:6px 2px 0">Sit-up form: ${SITUP_FORM}</p></div>`;
 }
 function doneCard(k,p){
   const s=S.sessions[k]; let vol=0, sets=0; const prs=S.prs.filter(x=>x.k===k).length;
   for(const ex of planExercises(p,k)){ const st=s.ex[ex.id]; if(!st) continue; for(const x of st.sets) if(x&&x.done){ sets++; if(ex.kind==='db') vol+=x.w*x.r; } }
   const r=S.runs[k], pt=S.pt[k], n=streak();
-  const a = r ? (r.sec?['1.5 mi',mmss(r.sec)]:['Minutes',r.min]) : ['Sets',sets];
+  const a = r&&(r.sec||r.min) ? (r.sec?['1.5 mi',mmss(r.sec)]:['Minutes',r.min]) : ['Sets',sets];
   const b = pt ? ['Push-ups',pt.push] : ['Volume', vol>=1000?(vol/1000).toFixed(1)+'k':vol];
   const c = pt && p.type!=='lift' && p.pt ? ['Sit-ups',pt.sit] : ['PRs',prs];
   const nx=nextTraining(k);
@@ -784,7 +824,7 @@ function vPT(){
     const pts=Object.entries(S.runs).filter(([,r])=>r.sec).sort().map(([k,r])=>({x:pkey(k).getTime(),y:r.sec}));
     if(pts.length){ const b=Math.min(...pts.map(p=>p.y)); h+=`<div class="row between" style="margin-top:14px"><div><div class="tiny">Latest</div><div class="metric">${mmss(pts[pts.length-1].y)}</div></div><div style="text-align:right"><div class="tiny">Best</div><div class="metric" style="font-size:30px;color:var(--acc)">${mmss(b)}</div></div></div>`; }
     h+= pts.length ? chart({series:[{pts,color:'#64D2FF',area:true}],invert:true,yFmt:mmss}) : `<div class="empty">Your first timed 1.5-mile is the mock test on ${fmtD(S.program.mocks[0])}.<br>Log it there and the trend starts here.</div>`;
-    h+=`<p class="tiny" style="margin:10px 2px 0">Higher on the chart = faster. This tracks only your own times.</p>`;
+    h+=`<p class="tiny" style="margin:10px 2px 0">Higher on the chart = faster. ${mileStd()}.</p>`;
   } else {
     const std=PT_STD[seg], buf=PT_BUF[seg];
     const pts=ks.map(k=>({x:pkey(k).getTime(),y:S.pt[k][seg]})).filter(p=>p.y!=null);
@@ -795,7 +835,7 @@ function vPT(){
   h+= rows.length ? rows.map(r=> r.t==='pt'
     ? `<div class="li"><div class="grow"><div style="font-weight:600" class="num">${S.pt[r.k].push} push-ups · ${S.pt[r.k].sit} sit-ups</div><div class="tiny">${fmtD(r.k)}</div></div><button class="ib" data-act="pt-del" data-v="${r.k}" aria-label="Delete">✕</button></div>`
     : `<div class="li"><div class="grow"><div style="font-weight:600" class="num">1.5 mi · ${mmss(S.runs[r.k].sec)}</div><div class="tiny">${fmtD(r.k)}</div></div><button class="ib" data-act="mile-del" data-v="${r.k}" aria-label="Delete">✕</button></div>`).join('') : `<div class="empty">No entries yet.</div>`;
-  h+=`</div><p class="tiny" style="margin:4px 6px">Standard: 22 push-ups and 25 sit-ups, 60 s each. Buffers (30 / 35) are your own safety margin.</p>`;
+  h+=`</div><p class="tiny" style="margin:4px 6px">Standard: 22 push-ups and 25 sit-ups, 60 s each, and 1.5 mi in ${mmss(RUN_STD)} or less, with ${EVENT_REST_MIN} min rest between events. Buffers (30 / 35, ≈${mmss(RUN_GOAL)}) are your own safety margin.</p>`;
   return h;
 }
 
@@ -924,7 +964,7 @@ function vMore(){
   if(b.alt) for(const s of ['fbA','fbB']) h+=dayCardPlan(bi,s,b.alt[s],'Template');
   if(b.opt) h+=dayCardPlan(bi,'opt',Object.assign({type:'lift'},b.opt),`Optional · Thursday · unlocks after 8/8 Block 1 lifts (${liftDoneB1()}/8)`);
   h+=`<div class="sec"><h2>Mock tests</h2></div><div class="card list" style="padding-top:4px;padding-bottom:4px">${mockDates().map(k=>`<div class="li"><div class="grow"><div style="font-weight:600">${fmtD(k)}${k.slice(0,4)!==t.slice(0,4)?', '+k.slice(0,4):''}</div><div class="tiny">${st.testDate&&k===taperMock(st.testDate)?'Last mock before your test':'Push-ups · sit-ups · 1.5 mi'}</div></div>${k<t?(dayDone(k)?'<span class="pill acc">Done</span>':''):`<button class="btn sm" data-act="day" data-v="${k}">View</button>`}</div>`).join('')}</div>
-  <p class="tiny" style="margin:4px 6px">Order: warm-up · push-ups 60 s · 3 min · sit-ups 60 s · 5 min · 1.5 mi · cool-down. Confirm the official event order and form standard with the academy.</p>`;
+  <p class="tiny" style="margin:4px 6px">Order: warm-up · push-ups 60 s · ${EVENT_REST_MIN} min · sit-ups 60 s · ${EVENT_REST_MIN} min · 1.5 mi · cool-down. Mocks before the PT tune-up block are a steady RPE 7. Confirm the official event order and form standard with the academy.</p>`;
   h+=`<div class="sec"><h2>Key dates</h2></div><div class="card" style="padding:4px 16px">
     <div class="field"><label for="s-test">Hiring test date<small>${st.testDate?'Taper and last mock added automatically':'Expected Feb 2027 — not confirmed'}</small></label><input id="s-test" class="tf" type="date" data-setd="testDate" value="${st.testDate||''}" style="width:150px;margin:0"></div>
     <div class="field"><label for="s-acad">Academy start<small>${st.academyStart?'Final 5–7 days: volume −50%':'Not set'}</small></label><input id="s-acad" class="tf" type="date" data-setd="academyStart" value="${st.academyStart||''}" style="width:150px;margin:0"></div>
@@ -1004,7 +1044,7 @@ function coachPayload(R){
     const ex={}; for(const [id,e] of Object.entries(s.ex)){ const d=e.sets.filter(x=>x&&x.done).map(x=>x.rir!=null?[x.w||0,x.r,x.rir]:[x.w||0,x.r]); if(d.length) ex[id]=d; }
     if(s.done||Object.keys(ex).length) sessions[k]={done:!!s.done,ex}; }
   for(const [k,v] of Object.entries(S.pt)) if(inR(k,v,R)) pt[k]=[v.push,v.sit];
-  for(const [k,v] of Object.entries(S.runs)) if(inR(k,v,R)){ const o={}; if(v.min) o.min=v.min; if(v.sec) o.mile=mmss(v.sec); runs[k]=o; }
+  for(const [k,v] of Object.entries(S.runs)) if(inR(k,v,R)){ const o={}; if(v.min) o.min=v.min; if(v.sec) o.mile=mmss(v.sec); if(v.z2) o.z2=v.z2; runs[k]=o; }
   for(const [k,v] of Object.entries(S.checkins)) if(inR(k,v,R)){ const o={}; for(const f of ['weight','waist','cal','protein','sleep','energy']) if(v[f]!=null&&v[f]!=='') o[f]=v[f]; if(Object.keys(o).length) checkins[k]=o; }
   const d0=[R.from,...Object.keys(sessions),...Object.keys(runs)].sort()[0];
   for(let k=d0;k<=R.to;k=addD(k,1)){ const p=planFor(k); if(isTraining(p)) { const o={d:k,plan:p.title,type:p.type,b:p.block.n,w:p.week,done:dayDone(k)}; if(p.flags.length) o.flags=p.flags; if(p.type==='mock') o.mock=true; days.push(o); } }
@@ -1024,7 +1064,7 @@ function coachSummary(R,J){
   const dd=J.days.filter(d=>d.d<=t);
   if(dd.length){ L.push('','Sessions:'); for(const d of dd){ const s=J.sessions[d.d], r=J.runs[d.d];
     let x=''; if(s&&Object.keys(s.ex).length) x=' — '+Object.entries(s.ex).map(([id,st])=>`${(J.ex[id]||id).split('|')[0]} ${st.map(a=>(a[0]?a[0]+'×':'')+a[1]).join(',')}`).join('; ');
-    if(r) x+=(x?' · ':' — ')+(r.mile?`1.5 mi ${r.mile}`:'')+(r.mile&&r.min?', ':'')+(r.min?`${r.min} min`:'');
+    if(r) x+=(x?' · ':' — ')+(r.mile?`1.5 mi ${r.mile}`:'')+(r.mile&&r.min?', ':'')+(r.min?`${r.min} min`:'')+(r.z2?`${r.mile||r.min?', ':''}zone 2 ${r.z2} min`:'');
     L.push(`${d.done?'✓':d.d===t?'·':'✗'} ${fmtD(d.d)} ${d.plan}${d.flags?' ('+d.flags.join(', ').toLowerCase()+')':''}${x}`); } }
   const pk=Object.keys(J.pt).sort(); if(pk.length){ L.push('','PT max tests (std 22/25 · buffer 30/35):'); for(const k of pk) L.push(`${fmtShort(k)}: ${J.pt[k][0]} push-ups · ${J.pt[k][1]} sit-ups`); }
   const mk=Object.keys(J.runs).filter(k=>J.runs[k].mile).sort(); if(mk.length){ L.push('','1.5 mi:'); for(const k of mk) L.push(`${fmtShort(k)}: ${J.runs[k].mile}`); }
@@ -1237,11 +1277,13 @@ document.addEventListener('click',ev=>{
     case 'rmset': { const ex=findEx(D.id), e=exState(UI.date,ex.id); if(e.sets.length>ex.sets) e.sets.pop(); UI.open=null; save(); render(); break; }
     case 'finish': commitInputs(); finish(); break;
     case 'reopen': sess(UI.date,true).done=false; save(); render(true); break;
+    case 'z2-adj': { const i=document.getElementById('z2Min'); i.value=Math.max(0,(+i.value||0)+(+D.d)); break; }
+    case 'z2-save': { const m=num('z2Min'); if(!m){toast('Add minutes first');break;} S.runs[UI.date]=Object.assign(S.runs[UI.date]||{},{z2:m,at:Date.now()}); save(); toast('Zone 2 logged'); render(); break; }
     case 'run-adj': { const i=document.getElementById('runMin'); i.value=Math.max(0,(+i.value||0)+(+D.d)); break; }
     case 'run-save': { const m=num('runMin'); if(!m){toast('Add minutes first');break;} S.runs[UI.date]=Object.assign(S.runs[UI.date]||{},{min:m,at:Date.now()}); save(); toast('Run logged'); render(); break; }
     case 'mile-save': { const m=num('mileM')||0, s=num('mileS')||0, sec=m*60+s; if(m<4||s>=60){toast('Enter minutes and seconds');break;} const best=bestMile(UI.date); S.runs[UI.date]=Object.assign(S.runs[UI.date]||{},{sec,at:Date.now()}); save(); toast(best&&sec<best?`New best 1.5 mi · ${mmss(sec)}`:'Time logged', best&&sec<best?'pr':''); render(); break; }
     case 'pt-adj': { const i=document.getElementById(D.f==='push'?'ptPush':'ptSit'); i.value=Math.max(0,(+i.value||0)+(+D.d)); break; }
-    case 'pt-timer': startTimer(60,'Push-ups · max strict reps',{sec:180,label:'Rest before sit-ups',next:{sec:60,label:'Sit-ups · max strict reps',next:D.v==='mock'?{sec:300,label:'Rest before the 1.5 mi'}:null}}); break;
+    case 'pt-timer': { const R=D.v==='mock'?EVENT_REST_MIN*60:180; startTimer(60,'Push-ups · max strict reps',{sec:R,label:'Rest before sit-ups',next:{sec:60,label:'Sit-ups · max strict reps',next:D.v==='mock'?{sec:EVENT_REST_MIN*60,label:'Rest before the 1.5 mi'}:null}}); break; }
     case 'pt-save': { const pu=num('ptPush'), su=num('ptSit'); if(pu==null||su==null){toast('Enter both numbers');break;} const prev=lastPT(UI.date); S.pt[UI.date]={push:pu,sit:su,at:Date.now()}; save();
       const up=prev&&(pu>prev.push||su>prev.sit); toast(up?`Up from last time${pu>prev.push?` · +${pu-prev.push} push-ups`:''}${su>prev.sit?` · +${su-prev.sit} sit-ups`:''}`:'PT practice logged', up?'pr':''); render(); break; }
     case 'pt-new': ptSheet(); break;

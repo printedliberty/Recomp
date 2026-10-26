@@ -1,5 +1,5 @@
 // Recomp service worker. All paths are relative to this file, so it works at / or under a subpath like /recomp/.
-const CACHE = 'recomp-v7';
+const CACHE = 'recomp-v8';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 const INDEX = new URL('./index.html', self.location).href;
 
